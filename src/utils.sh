@@ -1,11 +1,31 @@
-# Cava
-sudo apt install cava -y
+#!/bin/bash
+set -euo pipefail
 
-# Btop
-sudo apt install btop -y
+echo "==================================================================="
+echo "                   INSTALANDO UTILIDADES DIARIAS"
+echo "==================================================================="
 
-# Fastfetch
-sudo apt install fastfetch -y
+echo "Actualizando paquetes de utilidades..."
 
-# Tree
-sudo apt install tree -y
+UTILS_PKGS=(
+    btop
+    fastfetch
+    cava
+    tree
+    bat
+    ripgrep
+    fd-find
+    jq
+    unzip
+    p7zip-full
+    htop
+)
+
+for pkg in "${UTILS_PKGS[@]}"; do
+    echo "Instalando $pkg..."
+    apt install -y "$pkg" || echo "Aviso: No se pudo instalar $pkg o ya está en la versión más reciente."
+done
+
+echo "==================================================================="
+echo "            UTILIDADES DIARIAS INSTALADAS CON ÉXITO"
+echo "==================================================================="

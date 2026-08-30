@@ -1,156 +1,146 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "-------------------------------------------------------------------"
-echo "                         SETUP.SH"
-echo "-------------------------------------------------------------------"
+# -------------------------------------------------------------------
+# Directorio base del repositorio
+# -------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "==================================================================="
+echo "                  LAZHEART SYSTEM SETUP & CONFIG                   "
+echo "==================================================================="
 
 # -------------------------------------------------------------------
 # Usuario real que ejecutó el script
 # -------------------------------------------------------------------
-
-USER_NAME="${SUDO_USER:-$USER}"
+export TARGET_USER="${SUDO_USER:-$USER}"
+export TARGET_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
 
 # -------------------------------------------------------------------
-# Verificar privilegios
+# Verificar privilegios de Root / Sudo
 # -------------------------------------------------------------------
-
-echo "Verificando privilegios..."
-
 if [ "$(id -u)" -ne 0 ]; then
-    echo "El script necesita privilegios de sudo."
-    echo "Ejecutando nuevamente con sudo..."
+    echo "El script necesita privilegios de administrador."
+    echo "Solicitando elevación con sudo..."
     echo
-
     exec sudo "$0" "$@"
 fi
 
-echo "Ejecutando con privilegios de root."
-echo "Usuario: $USER_NAME"
+echo "Ejecutando con privilegios de root para el usuario: $TARGET_USER"
+echo "Directorio Home del usuario: $TARGET_HOME"
 
 # -------------------------------------------------------------------
-# Verificar grupo sudo
+# Verificar y asegurar grupo sudo
 # -------------------------------------------------------------------
-
 echo "-------------------------------------------------------------------"
-echo "Verificando grupo sudo..."
+echo "Verificando pertenencia al grupo sudo..."
 echo "-------------------------------------------------------------------"
 
-if id -nG "$USER_NAME" | grep -qw "sudo"; then
-    echo "El usuario $USER_NAME ya pertenece al grupo sudo."
+if id -nG "$TARGET_USER" | grep -qw "sudo"; then
+    echo "El usuario $TARGET_USER ya pertenece al grupo sudo."
 else
-    echo "El usuario $USER_NAME no pertenece al grupo sudo."
-    echo "Añadiendo usuario al grupo sudo..."
-
-    usermod -aG sudo "$USER_NAME"
-
-    echo "Usuario añadido al grupo sudo."
-    echo "El cambio tendrá efecto después de reiniciar/iniciar sesión."
+    echo "Añadiendo usuario $TARGET_USER al grupo sudo..."
+    usermod -aG sudo "$TARGET_USER"
+    echo "Usuario añadido al grupo sudo con éxito."
 fi
 
 # -------------------------------------------------------------------
-# Actualizar repositorios
+# Actualizar repositorios del sistema
 # -------------------------------------------------------------------
-
 echo "-------------------------------------------------------------------"
-echo "Actualizando repositorios..."
+echo "Actualizando listas de paquetes del sistema..."
 echo "-------------------------------------------------------------------"
 
 apt update
 
 # -------------------------------------------------------------------
-# Instalar curl
+# Instalar paquetes base esenciales
 # -------------------------------------------------------------------
-
 echo "-------------------------------------------------------------------"
-echo "Verificando curl..."
+echo "Instalando paquetes base esenciales (curl, git, zsh, ca-certificates)..."
 echo "-------------------------------------------------------------------"
 
-if command -v curl >/dev/null 2>&1; then
-    echo "curl ya está instalado."
-else
-    echo "curl no está instalado."
-    echo "Instalando curl..."
-
-    apt install -y curl
-
-    echo "curl instalado correctamente."
-fi
+apt install -y curl git zsh ca-certificates gnupg build-essential
 
 # -------------------------------------------------------------------
-# Instalar zsh
+# Instalar y Configurar Oh My Zsh para el usuario
 # -------------------------------------------------------------------
-
 echo "-------------------------------------------------------------------"
-echo "Verificando zsh..."
-echo "-------------------------------------------------------------------"
-
-if command -v zsh >/dev/null 2>&1; then
-    echo "zsh ya está instalado."
-else
-    echo "zsh no está instalado."
-    echo "Instalando zsh..."
-
-    apt install -y zsh
-
-    echo "zsh instalado correctamente."
-fi
-
-# -------------------------------------------------------------------
-# Instalar Oh My Zsh
-# -------------------------------------------------------------------
-
-echo "-------------------------------------------------------------------"
-echo "Verificando Oh My Zsh..."
+echo "Configurando Oh My Zsh..."
 echo "-------------------------------------------------------------------"
 
-OH_MY_ZSH="/home/$USER_NAME/.oh-my-zsh"
+OH_MY_ZSH="$TARGET_HOME/.oh-my-zsh"
 
 if [ -d "$OH_MY_ZSH" ]; then
-    echo "Oh My Zsh ya está instalado."
+    echo "Oh My Zsh ya está instalado en $OH_MY_ZSH."
 else
-    echo "Oh My Zsh no está instalado."
-    echo "Instalando Oh My Zsh..."
-
-    sudo -u "$USER_NAME" \
+    echo "Instalando Oh My Zsh para el usuario $TARGET_USER..."
+    sudo -u "$TARGET_USER" \
         RUNZSH=no \
         CHSH=no \
-        sh -c '$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)'
-
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     echo "Oh My Zsh instalado correctamente."
 fi
 
 # -------------------------------------------------------------------
 # Configurar zsh como shell predeterminado
 # -------------------------------------------------------------------
-
 echo "-------------------------------------------------------------------"
-echo "Verificando shell predeterminado..."
+echo "Configurando Zsh como la shell predeterminada..."
 echo "-------------------------------------------------------------------"
 
 ZSH_PATH="$(command -v zsh)"
-CURRENT_SHELL="$(getent passwd "$USER_NAME" | cut -d: -f7)"
+CURRENT_SHELL="$(getent passwd "$TARGET_USER" | cut -d: -f7)"
 
 if [ "$CURRENT_SHELL" = "$ZSH_PATH" ]; then
-    echo "zsh ya es el shell predeterminado."
+    echo "Zsh ya es la shell predeterminada ($ZSH_PATH)."
 else
     echo "Shell actual: $CURRENT_SHELL"
-    echo "Cambiando shell predeterminado a zsh..."
-
-    chsh -s "$ZSH_PATH" "$USER_NAME"
-
-    echo "zsh configurado como shell predeterminado."
+    echo "Cambiando shell predeterminado a $ZSH_PATH para $TARGET_USER..."
+    chsh -s "$ZSH_PATH" "$TARGET_USER"
+    echo "Zsh configurado como shell predeterminado con éxito."
 fi
 
 # -------------------------------------------------------------------
-# Final
+# Permisos de ejecución para los módulos en src/
+# -------------------------------------------------------------------
+chmod +x "$SCRIPT_DIR/src/"*.sh
+
+# -------------------------------------------------------------------
+# Ejecución de Módulos
 # -------------------------------------------------------------------
 
-echo "-------------------------------------------------------------------"
-echo "SETUP COMPLETADO"
-echo "-------------------------------------------------------------------"
+echo "==================================================================="
+echo "                   EJECUTANDO FLUJOS DE TRABAJO"
+echo "==================================================================="
 
-echo "Usuario: $USER_NAME"
-echo "Shell:   $ZSH_PATH"
-echo "Reinicia la máquina para aplicar los cambios."
 echo
+echo ">>> [1/4] Ejecutando: src/software.sh"
+"$SCRIPT_DIR/src/software.sh"
+
+echo
+echo ">>> [2/4] Ejecutando: src/tools.sh"
+"$SCRIPT_DIR/src/tools.sh"
+
+echo
+echo ">>> [3/4] Ejecutando: src/utils.sh"
+"$SCRIPT_DIR/src/utils.sh"
+
+echo
+echo ">>> [4/4] Ejecutando: src/flatpak.sh"
+"$SCRIPT_DIR/src/flatpak.sh"
+
+# -------------------------------------------------------------------
+# Finalización
+# -------------------------------------------------------------------
+echo
+echo "==================================================================="
+echo "                   SETUP COMPLETADO CON ÉXITO                      "
+echo "==================================================================="
+echo "Usuario configurado: $TARGET_USER"
+echo "Shell del sistema:   $ZSH_PATH"
+echo "Grupos añadidos:     sudo, docker"
+echo "-------------------------------------------------------------------"
+echo "NOTA: Cierra la sesión o reinicia el equipo para que los grupos y"
+echo "la nueva shell por defecto tomen efecto completo en tu entorno."
+echo "==================================================================="
