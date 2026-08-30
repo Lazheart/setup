@@ -30,8 +30,10 @@ echo "Sober Instalado"
 flatpak install -y flathub com.stremio.Stremio
 echo "Stremio Instalado"
 
-flatpak install flathub org.onlyoffice.desktopeditors
+flatpak install -y flathub org.onlyoffice.desktopeditors
 echo "OnlyOffice Instalado"
 
+flatpak install -y flathub com.obsproject.Studio
+echo "OBS Instalado"
 
-echo "-------------------------------------------------------------------"t
+echo "-------------------------------------------------------------------"

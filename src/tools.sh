@@ -1,3 +1,7 @@
+
+# Ptyxis
+sudo apt install ptyxis -y
+
 # Java
 sudo apt install openjdk-21-jdk -y
 
