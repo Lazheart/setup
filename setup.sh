@@ -115,20 +115,25 @@ echo "                   EJECUTANDO FLUJOS DE TRABAJO"
 echo "==================================================================="
 
 echo
-echo ">>> [1/4] Ejecutando: src/software.sh"
+echo ">>> [1/5] Ejecutando: src/software.sh"
 "$SCRIPT_DIR/src/software.sh"
 
 echo
-echo ">>> [2/4] Ejecutando: src/tools.sh"
+echo ">>> [2/5] Ejecutando: src/tools.sh"
 "$SCRIPT_DIR/src/tools.sh"
 
 echo
-echo ">>> [3/4] Ejecutando: src/utils.sh"
+echo ">>> [3/5] Ejecutando: src/utils.sh"
 "$SCRIPT_DIR/src/utils.sh"
 
 echo
-echo ">>> [4/4] Ejecutando: src/flatpak.sh"
+echo ">>> [4/5] Ejecutando: src/flatpak.sh"
 "$SCRIPT_DIR/src/flatpak.sh"
+
+echo
+echo ">>> [5/5] Ejecutando: src/gnome_extension.sh"
+"$SCRIPT_DIR/src/gnome_extension.sh"
+
 
 # -------------------------------------------------------------------
 # Finalización

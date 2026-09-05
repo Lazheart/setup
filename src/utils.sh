@@ -12,13 +12,10 @@ UTILS_PKGS=(
     fastfetch
     cava
     tree
-    bat
     ripgrep
     fd-find
     jq
     unzip
-    p7zip-full
-    htop
 )
 
 for pkg in "${UTILS_PKGS[@]}"; do
