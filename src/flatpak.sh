@@ -2,22 +2,29 @@
 set -euo pipefail
 
 echo "==================================================================="
-echo "            INSTALANDO Y CONFIGURANDO FLATPAK Y APPS"
+echo "            CONFIGURANDO FLATPAK Y APLICACIONES"
 echo "==================================================================="
 
 # -------------------------------------------------------------------
-# Instalación del backend de Flatpak
+# Instalación y verificación del backend de Flatpak
 # -------------------------------------------------------------------
-echo "Instalando Flatpak y dependencias..."
-apt install -y flatpak flatpak-builder
+echo "-------------------------------------------------------------------"
+if dpkg -s flatpak &>/dev/null; then
+    echo "Flatpak ya está instalado. Buscando actualizaciones del paquete..."
+    apt install --only-upgrade -y flatpak flatpak-builder 2>/dev/null || true
+    echo "Backend de Flatpak verificado correctamente."
+else
+    echo "Instalando Flatpak y dependencias..."
+    apt install -y flatpak flatpak-builder
+fi
 
-echo "Añadiendo repositorio oficial de Flathub..."
+echo "Verificando repositorio oficial de Flathub..."
 flatpak remote-add --if-not-exists \
     flathub \
     https://dl.flathub.org/repo/flathub.flatpakrepo
 
 # -------------------------------------------------------------------
-# Instalación de Aplicaciones Flatpak
+# Instalación y Actualización de Aplicaciones Flatpak
 # -------------------------------------------------------------------
 FLATPAK_APPS=(
     "io.github.realmazharhussain.GdmSettings"
@@ -31,12 +38,18 @@ FLATPAK_APPS=(
 )
 
 echo "-------------------------------------------------------------------"
-echo "Instalando aplicaciones Flatpak..."
+echo "Verificando aplicaciones Flatpak..."
 echo "-------------------------------------------------------------------"
 
 for app in "${FLATPAK_APPS[@]}"; do
-    echo "Instalando Flatpak: $app..."
-    flatpak install -y flathub "$app" || echo "Aviso: No se pudo instalar $app o ya está instalado."
+    if flatpak info "$app" &>/dev/null; then
+        echo "Flatpak '$app' ya está instalado. Buscando actualizaciones..."
+        flatpak update -y "$app" 2>/dev/null || echo "Aviso: No se pudo actualizar $app o ya está en la última versión."
+        echo "Flatpak '$app' al día."
+    else
+        echo "Instalando Flatpak: $app..."
+        flatpak install -y flathub "$app" || echo "Aviso: No se pudo instalar $app."
+    fi
 done
 
 # -------------------------------------------------------------------

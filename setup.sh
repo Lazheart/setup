@@ -72,7 +72,9 @@ echo "-------------------------------------------------------------------"
 OH_MY_ZSH="$TARGET_HOME/.oh-my-zsh"
 
 if [ -d "$OH_MY_ZSH" ]; then
-    echo "Oh My Zsh ya está instalado en $OH_MY_ZSH."
+    echo "Oh My Zsh ya está instalado en $OH_MY_ZSH. Actualizando repositorio..."
+    sudo -u "$TARGET_USER" git -C "$OH_MY_ZSH" pull --quiet --rebase 2>/dev/null || echo "Oh My Zsh ya se encuentra en su versión más reciente."
+    echo "Oh My Zsh verificado/actualizado correctamente."
 else
     echo "Instalando Oh My Zsh para el usuario $TARGET_USER..."
     sudo -u "$TARGET_USER" \

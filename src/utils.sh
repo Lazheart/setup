@@ -2,10 +2,8 @@
 set -euo pipefail
 
 echo "==================================================================="
-echo "                   INSTALANDO UTILIDADES DIARIAS"
+echo "                   CONFIGURANDO UTILIDADES DIARIAS"
 echo "==================================================================="
-
-echo "Actualizando paquetes de utilidades..."
 
 UTILS_PKGS=(
     btop
@@ -19,10 +17,16 @@ UTILS_PKGS=(
 )
 
 for pkg in "${UTILS_PKGS[@]}"; do
-    echo "Instalando $pkg..."
-    apt install -y "$pkg" || echo "Aviso: No se pudo instalar $pkg o ya está en la versión más reciente."
+    if dpkg -s "$pkg" &>/dev/null; then
+        echo "Paquete '$pkg' ya está instalado. Buscando actualizaciones..."
+        apt install --only-upgrade -y "$pkg" 2>/dev/null || echo "Aviso: No se pudo verificar actualización para $pkg."
+        echo "Paquete '$pkg' verificado."
+    else
+        echo "Instalando paquete '$pkg'..."
+        apt install -y "$pkg" || echo "Aviso: No se pudo instalar $pkg."
+    fi
 done
 
 echo "==================================================================="
-echo "            UTILIDADES DIARIAS INSTALADAS CON ÉXITO"
+echo "            UTILIDADES DIARIAS CONFIGURADAS CON ÉXITO"
 echo "==================================================================="

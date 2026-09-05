@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "==================================================================="
-echo "              INSTALANDO Y CONFIGURANDO EXTENSIONES GNOME"
+echo "              CONFIGURANDO EXTENSIONES GNOME"
 echo "==================================================================="
 
 USER_NAME="${TARGET_USER:-${SUDO_USER:-$USER}}"
@@ -13,16 +13,20 @@ echo "Configurando extensiones para el usuario: $USER_NAME ($USER_HOME)"
 # -------------------------------------------------------------------
 # Instalación de Dependencias del Sistema y pipx
 # -------------------------------------------------------------------
-echo "Instalando dependencias base y pipx..."
+echo "-------------------------------------------------------------------"
+echo "Verificando dependencias base y pipx..."
 apt install -y pipx python3-pip python3-venv gnome-shell-extension-prefs 2>/dev/null || apt install -y pipx python3-pip python3-venv || true
 
 # -------------------------------------------------------------------
-# Instalación de gnome-extensions-cli (gext)
+# Instalación y verificación de gnome-extensions-cli (gext)
 # -------------------------------------------------------------------
-echo "Instalando gnome-extensions-cli (gext)..."
-
-# Asegurar que gext esté instalado en el sistema o en el espacio del usuario
-if ! command -v gext &>/dev/null && [ ! -f "$USER_HOME/.local/bin/gext" ] && [ ! -f /usr/local/bin/gext ]; then
+echo "-------------------------------------------------------------------"
+if command -v gext &>/dev/null || [ -f "$USER_HOME/.local/bin/gext" ] || [ -f /usr/local/bin/gext ]; then
+    echo "gnome-extensions-cli (gext) ya está instalado. Buscando actualizaciones..."
+    pipx upgrade --global gnome-extensions-cli 2>/dev/null || \
+    sudo -u "$USER_NAME" pipx upgrade gnome-extensions-cli 2>/dev/null || true
+else
+    echo "Instalando gnome-extensions-cli (gext)..."
     pipx install --global gnome-extensions-cli --system-site-packages 2>/dev/null || \
     sudo -u "$USER_NAME" pipx install gnome-extensions-cli --system-site-packages 2>/dev/null || \
     sudo -u "$USER_NAME" pipx install gnome-extensions-cli 2>/dev/null || \
@@ -46,7 +50,7 @@ elif [ -x "$USER_HOME/.local/bin/gext" ]; then
 fi
 
 # -------------------------------------------------------------------
-# Lista de Extensiones de GNOME a instalar
+# Lista de Extensiones de GNOME a instalar o actualizar
 # -------------------------------------------------------------------
 GNOME_EXTENSIONS=(
     "blur-my-shell@aunetx"
@@ -59,23 +63,40 @@ GNOME_EXTENSIONS=(
     "status-icons@gnome-shell-extensions.gcampax.github.com"
 )
 
+# Asegurar directorios y permisos
+mkdir -p "$USER_HOME/.local/share/gnome-shell/extensions"
+chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.local" 2>/dev/null || true
+
 echo "-------------------------------------------------------------------"
-echo "Instalando y activando extensiones de GNOME Shell..."
+echo "Verificando y configurando extensiones de GNOME Shell..."
 echo "-------------------------------------------------------------------"
 
 for ext in "${GNOME_EXTENSIONS[@]}"; do
-    echo "Instalando extensión: $ext..."
-    if [ -n "$GEXT_BIN" ]; then
-        sudo -u "$USER_NAME" "$GEXT_BIN" install "$ext" 2>/dev/null || \
-        sudo -u "$USER_NAME" "$GEXT_BIN" --backend file install "$ext" 2>/dev/null || \
-        echo "Aviso: No se pudo instalar $ext (puede que ya esté instalada o requiera sesión gráfica activa)."
+    EXT_IS_INSTALLED=false
+    if [ -d "$USER_HOME/.local/share/gnome-shell/extensions/$ext" ] || \
+       [ -d "/usr/share/gnome-shell/extensions/$ext" ]; then
+        EXT_IS_INSTALLED=true
+    fi
 
-        echo "Habilitando extensión: $ext..."
-        sudo -u "$USER_NAME" "$GEXT_BIN" enable "$ext" 2>/dev/null || \
-        sudo -u "$USER_NAME" gnome-extensions enable "$ext" 2>/dev/null || true
+    if [ "$EXT_IS_INSTALLED" = true ]; then
+        echo "Extensión '$ext' ya está instalada. Buscando actualizaciones..."
+        if [ -n "$GEXT_BIN" ]; then
+            sudo -u "$USER_NAME" "$GEXT_BIN" -F update "$ext" 2>/dev/null || true
+            echo "Asegurando habilitación de: $ext..."
+            sudo -u "$USER_NAME" "$GEXT_BIN" -F enable "$ext" 2>/dev/null || true
+        fi
     else
-        echo "Aviso: gext no encontrado en PATH, intentando habilitar directamente..."
-        sudo -u "$USER_NAME" gnome-extensions enable "$ext" 2>/dev/null || echo "Aviso: No se pudo procesar $ext."
+        echo "Instalando extensión: $ext..."
+        if [ -n "$GEXT_BIN" ]; then
+            if sudo -u "$USER_NAME" "$GEXT_BIN" -F install "$ext"; then
+                echo "Habilitando extensión: $ext..."
+                sudo -u "$USER_NAME" "$GEXT_BIN" -F enable "$ext" 2>/dev/null || true
+            else
+                echo "Aviso: No se pudo instalar $ext."
+            fi
+        else
+            echo "Aviso: gext no encontrado en PATH, no se pudo procesar $ext."
+        fi
     fi
 done
 
