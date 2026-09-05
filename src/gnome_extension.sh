@@ -14,8 +14,9 @@ echo "Configurando extensiones para el usuario: $USER_NAME ($USER_HOME)"
 # Instalación de Dependencias del Sistema y pipx
 # -------------------------------------------------------------------
 echo "-------------------------------------------------------------------"
-echo "Verificando dependencias base y pipx..."
-apt install -y pipx python3-pip python3-venv gnome-shell-extension-prefs 2>/dev/null || apt install -y pipx python3-pip python3-venv || true
+echo "Verificando dependencias base, paquete oficial de extensiones y herramientas..."
+apt install -y pipx python3-pip python3-venv gnome-shell-extension-prefs gnome-shell-extensions gnome-shell-extension-manager 2>/dev/null || \
+apt install -y pipx python3-pip python3-venv gnome-shell-extension-prefs || true
 
 # -------------------------------------------------------------------
 # Instalación y verificación de gnome-extensions-cli (gext)
@@ -81,7 +82,7 @@ for ext in "${GNOME_EXTENSIONS[@]}"; do
     if [ "$EXT_IS_INSTALLED" = true ]; then
         echo "Extensión '$ext' ya está instalada. Buscando actualizaciones..."
         if [ -n "$GEXT_BIN" ]; then
-            sudo -u "$USER_NAME" "$GEXT_BIN" -F update "$ext" 2>/dev/null || true
+            sudo -u "$USER_NAME" "$GEXT_BIN" -F update -y --user "$ext" 2>/dev/null || true
             echo "Asegurando habilitación de: $ext..."
             sudo -u "$USER_NAME" "$GEXT_BIN" -F enable "$ext" 2>/dev/null || true
         fi
