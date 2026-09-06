@@ -35,6 +35,12 @@ install_marble_theme() {
     echo ""
     echo ">> Instalando Marble Shell Theme..."
 
+    THEMES_DIR="$TARGET_HOME/.themes"
+    if [ -d "$THEMES_DIR/Marble-red-dark" ]; then
+        echo "-- Marble Shell Theme ya instalado, omitiendo."
+        return
+    fi
+
     cd "$TEMP_DIR"
     # Clonar como usuario real para evitar directorios de root
     sudo -u "$TARGET_USER" git clone --depth=1 https://github.com/imarkoff/Marble-shell-theme.git
@@ -57,23 +63,37 @@ install_kora_icons() {
     echo ""
     echo ">> Instalando Kora Icons..."
 
-    ICONS_DIR="$TARGET_HOME/.local/share/icons"
-    sudo -u "$TARGET_USER" mkdir -p "$ICONS_DIR"
+    LOCAL_ICONS_DIR="$TARGET_HOME/.local/share/icons"
+    SYSTEM_ICONS_DIR="/usr/share/icons"
+
+    if [ -d "$LOCAL_ICONS_DIR/kora" ] || [ -d "$SYSTEM_ICONS_DIR/kora" ]; then
+        echo "-- Kora Icons ya instalado, omitiendo."
+        return
+    fi
+
+    mkdir -p "$LOCAL_ICONS_DIR"
 
     cd "$TEMP_DIR"
     sudo -u "$TARGET_USER" git clone --depth=1 https://github.com/bikass/kora.git
 
-    # Copiar los temas de iconos al directorio local del usuario real
-    sudo -u "$TARGET_USER" cp -r kora/kora        "$ICONS_DIR/"
-    sudo -u "$TARGET_USER" cp -r kora/kora-pgrey  "$ICONS_DIR/"
+    # Copiar al directorio local del usuario real (como root, luego ceder propiedad)
+    cp -r kora/kora        "$LOCAL_ICONS_DIR/"
+    cp -r kora/kora-pgrey  "$LOCAL_ICONS_DIR/"
+    chown -R "$TARGET_USER" "$LOCAL_ICONS_DIR/kora" "$LOCAL_ICONS_DIR/kora-pgrey"
+
+    # Copiar al directorio del sistema (requiere root)
+    cp -r kora/kora        "$SYSTEM_ICONS_DIR/"
+    cp -r kora/kora-pgrey  "$SYSTEM_ICONS_DIR/"
 
     # Actualizar caché de iconos si gtk-update-icon-cache está disponible
     if command -v gtk-update-icon-cache &>/dev/null; then
-        gtk-update-icon-cache -f -t "$ICONS_DIR/kora"       2>/dev/null || true
-        gtk-update-icon-cache -f -t "$ICONS_DIR/kora-pgrey" 2>/dev/null || true
+        gtk-update-icon-cache -f -t "$LOCAL_ICONS_DIR/kora"        2>/dev/null || true
+        gtk-update-icon-cache -f -t "$LOCAL_ICONS_DIR/kora-pgrey"  2>/dev/null || true
+        gtk-update-icon-cache -f -t "$SYSTEM_ICONS_DIR/kora"       2>/dev/null || true
+        gtk-update-icon-cache -f -t "$SYSTEM_ICONS_DIR/kora-pgrey" 2>/dev/null || true
     fi
 
-    echo " Kora Icons instalado en $ICONS_DIR"
+    echo " Kora Icons instalado en $LOCAL_ICONS_DIR y $SYSTEM_ICONS_DIR"
 }
 
 # ------------------------------------------------------------------------------
@@ -84,6 +104,12 @@ install_kora_icons() {
 install_deepin_cursors() {
     echo ""
     echo ">> Instalando DeepinV20 Dark Cursors..."
+
+    LOCAL_ICONS_DIR="$TARGET_HOME/.local/share/icons"
+    if [ -d "$LOCAL_ICONS_DIR/DeepinV20-dark-cursors" ]; then
+        echo "-- DeepinV20 Dark Cursors ya instalado, omitiendo."
+        return
+    fi
 
     cd "$TEMP_DIR"
     sudo -u "$TARGET_USER" git clone --depth=1 https://github.com/yeyushengfan258/DeepinV20-dark-cursors.git
