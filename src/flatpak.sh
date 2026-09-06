@@ -35,7 +35,7 @@ FLATPAK_APPS=(
     "com.stremio.Stremio"
     "org.onlyoffice.desktopeditors"
     "com.obsproject.Studio"
-    "org.mozilla.thunderbird_esr"
+    "org.mozilla.thunderbird"
 )
 
 echo "-------------------------------------------------------------------"
