@@ -62,6 +62,7 @@ GNOME_EXTENSIONS=(
     "lockscreen-extension@pratap.fastmail.fm"
     "primary_input_on_lockscreen@sagidayan.com"
     "status-icons@gnome-shell-extensions.gcampax.github.com"
+    "compiz-alike-magic-lamp-effect@hermes83.github.com"
 )
 
 # Asegurar directorios y permisos
