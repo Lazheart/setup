@@ -68,23 +68,6 @@ else
     echo "Heroic Games Launcher instalado correctamente."
 fi
 
-# -------------------------------------------------------------------
-# AnyDesk
-# -------------------------------------------------------------------
-echo "-------------------------------------------------------------------"
-if dpkg -s anydesk &>/dev/null || command -v anydesk &>/dev/null; then
-    INSTALLED_ANYDESK="$(dpkg-query -W -f='${Version}' anydesk 2>/dev/null || echo "detectada")"
-    echo "AnyDesk ya está instalado (versión $INSTALLED_ANYDESK). Buscando actualizaciones vía apt..."
-    apt install --only-upgrade -y anydesk 2>/dev/null || echo "AnyDesk ya se encuentra en su versión actual."
-    echo "AnyDesk verificado correctamente."
-else
-    echo "Descargando e instalando AnyDesk..."
-    wget -q --show-progress "https://download.anydesk.com/linux/anydesk_8.0.4-1_amd64.deb" -O "$TMP_DIR/anydesk.deb"
-    apt install -y "$TMP_DIR/anydesk.deb"
-    rm -f "$TMP_DIR/anydesk.deb"
-    echo "AnyDesk instalado correctamente."
-fi
-
 echo "==================================================================="
 echo "              SOFTWARE GENERAL CONFIGURADO CON ÉXITO"
 echo "==================================================================="

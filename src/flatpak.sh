@@ -36,6 +36,7 @@ FLATPAK_APPS=(
     "org.onlyoffice.desktopeditors"
     "com.obsproject.Studio"
     "org.mozilla.thunderbird"
+    "com.anydesk.Anydesk"
 )
 
 echo "-------------------------------------------------------------------"
